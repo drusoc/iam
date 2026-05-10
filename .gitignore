@@ -1,0 +1,5 @@
+.env
+!.env.e2e
+client_secret_*.json
+/bin
+.idea
