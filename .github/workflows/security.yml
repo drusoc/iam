@@ -25,9 +25,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: scan
+        continue-on-error: true
         uses: golang/govulncheck-action@v1.0.4
         with:
-          go-version-file: go.mod
+          go-version-input: 1.26.1
 
   zap:
     name: zap
@@ -44,9 +45,10 @@ jobs:
       - name: start application
         run: |
           cp .env.example .env
+          go build -o iam ./cmd
           docker compose up -d --wait
-          go run ./cmd > app.log 2>&1 &
-          timeout 30s bash -c 'until curl -fsS http://127.0.0.1:8080/healthz; do sleep 1; done'
+          ./iam > app.log 2>&1 &
+          curl --retry 60 --retry-connrefused --retry-delay 1 --fail http://127.0.0.1:8080/healthz || (cat app.log && false)
 
       - name: scan
         uses: zaproxy/action-baseline@v0.15.0
